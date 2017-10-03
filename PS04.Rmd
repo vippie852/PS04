@@ -1,6 +1,6 @@
 ---
 title: "STAT/MATH 495: Problem Set 04"
-author: "WRITE YOUR NAME HERE"
+author: "Vickie Ip"
 date: "2017-10-03"
 output:
   html_document:
@@ -18,12 +18,9 @@ set.seed(76)
 
 # Collaboration
 
-Please indicate who you collaborated with on this assignment:
+Please indicate who you collaborated with on this assignment: Pei Gong and Tim Lee
 
-
-# Load packages, data, model formulas
-
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE}
 library(tidyverse)
 credit <- read_csv("http://www-bcf.usc.edu/~gareth/ISL/Credit.csv") %>%
   select(-X1) %>%
@@ -53,8 +50,7 @@ credit_test <- credit %>%
   anti_join(credit_train, by="ID")
 ```
 
-
-# RMSE vs number of coefficients
+# RMSE vs Number of coefficients
 
 ```{r, echo=TRUE, warning=FALSE, message=FALSE}
 # Placeholder vectors of length 7. For now, I've filled them with arbitrary 
@@ -62,10 +58,26 @@ credit_test <- credit %>%
 RMSE_train <- runif(n=7)
 RMSE_test <- runif(n=7)
 
-
 # Do your work here:
 
+for(i in 1:7) {
+  model_lm <- lm(get(paste0("model", i, "_formula")), data = credit_train)
+  y_hat_test <- predict(model_lm, newdata = credit_test)
+  y_hat_train <- predict(model_lm, newdata = credit_train)
 
+  model_test <- credit_test %>% mutate(y_hat_test) 
+  model_train <- credit_train %>% mutate(y_hat_train) 
+  
+  RMSE_test[i] <- model_test %>%
+    summarise(MSE = mean((Balance-y_hat_test)^2)) %>% 
+    mutate(RMSE = sqrt(MSE)) %>% pull(RMSE) 
+  RMSE_train[i] <- model_train %>%
+    summarise(MSE = mean((Balance-y_hat_train)^2)) %>%
+    mutate(RMSE = sqrt(MSE)) %>% pull(RMSE)
+}
+```
+
+```{r}
 # Save results in a data frame. Note this data frame is in wide format.
 results <- data_frame(
   num_coefficients = 1:7,
@@ -89,12 +101,13 @@ ggplot(results, aes(x=num_coefficients, y=RMSE, col=type)) +
   labs(x="# of coefficients", y="RMSE", col="Data used to evaluate \nperformance of fitted model")
 ```
 
+# Interpretation of Graph
 
-# Interpret the graph
+This graph shows how the RMSE changes as the number of coefficients increases from 1 to 7. In this case, the training data contains 20 values and the test data contains 380 values. The highest RMSE for both curves are when there is only one coefficient in the model. Both curves also show a sharp drop in RMSE as the number of coefficients increases from 2 to 3. 
 
-Compare and contrast the two curves and hypothesize as to the root cause of any differences.
+However, as the number of coefficients increase from 4 to 7, the RMSE for the training data decreases while the test data increases. The decrease in RMSE for the training data curve indicates that the models are overfitting with the training data. The overfitting negatively impacts the models' accuracy in detecting noise and signal in the test data and thus generates an increase in RMSE for the test data curve.
 
-
+Additionally, the training data curve has a lower RMSE than the test data curve for all coefficients because the models were trained using the training data and can make more accurate predictions within the training data.
 
 # Bonus
 
@@ -102,6 +115,61 @@ Repeat the whole process, but let `credit_train` be a random sample of size 380
 from `credit` instead of 20. Now compare and contrast this graph with the
 one above and hypothesize as to the root cause of any differences.
 
-```{r, echo=FALSE}
-
+```{r, warning=FALSE, echo=FALSE}
+library(tidyverse)
+credit <- read_csv("http://www-bcf.usc.edu/~gareth/ISL/Credit.csv") %>%
+  select(-X1) %>%
+  mutate(ID = 1:n()) %>% 
+  select(ID, Balance, Income, Limit, Rating, Age, Cards, Education)
 ```
+
+```{r, echo = FALSE}
+set.seed(79)
+credit_train <- credit %>% 
+  sample_n(380)
+credit_test <- credit %>% 
+  anti_join(credit_train, by="ID")
+```
+
+```{r, echo=FALSE, warning=FALSE}
+RMSE_train <- runif(n=7)
+RMSE_test <- runif(n=7)
+
+for(i in 1:7){
+  model_lm <- lm(get(paste0("model", i, "_formula")), data = credit_train)
+  y_hat_test <- predict(model_lm, newdata = credit_test)
+  y_hat_train <- predict(model_lm, newdata = credit_train)
+
+  model_test <- credit_test %>% mutate(y_hat_test) 
+  model_train <- credit_train %>% mutate(y_hat_train) 
+  
+  RMSE_test[i] <- model_test %>%
+    summarise(MSE = mean((Balance-y_hat_test)^2)) %>% 
+    mutate(RMSE = sqrt(MSE)) %>% pull(RMSE) 
+  RMSE_train[i] <- model_train %>%
+    summarise(MSE = mean((Balance-y_hat_train)^2)) %>%
+    mutate(RMSE = sqrt(MSE)) %>% pull(RMSE)
+}
+
+results <- data_frame(
+  num_coefficients = 1:7,
+  RMSE_train,
+  RMSE_test
+) 
+
+results <- results %>% 
+  rename(
+    `Training data` = RMSE_train,
+    `Test data` = RMSE_test
+  ) %>% 
+
+  gather(type, RMSE, -num_coefficients)
+
+ggplot(results, aes(x=num_coefficients, y=RMSE, col=type)) +
+  geom_line() + 
+  labs(x="# of coefficients", y="RMSE", col="Data used to evaluate \nperformance of fitted model")
+```
+
+For this case, the training data has a sample size of 380 and the testing data has a sample size of 20. Similar to the previous graph, both the testing and training curve show a peak in RMSE for the model with one coefficient and a sharp drop in RMSE for the model with 3 coefficients. 
+
+However, the test data curve and training data curve are much closer together as compared to the previous case when the training data only contained 20 observations. This difference is due to the size of the training data. Since we have a larger training data, we are able to create a more powerful and sensitive model that is less likely to overfit with the test data.

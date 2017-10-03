@@ -290,7 +290,7 @@ ggplot(results, aes(x=num_coefficients, y=RMSE, col=type)) +
 <div id="interpretation-of-graph" class="section level1">
 <h1>Interpretation of Graph</h1>
 <p>This graph shows how the RMSE changes as the number of coefficients increases from 1 to 7. In this case, the training data contains 20 values and the test data contains 380 values. The highest RMSE for both curves are when there is only one coefficient in the model. Both curves also show a sharp drop in RMSE as the number of coefficients increases from 2 to 3.</p>
-<p>However, as the number of coefficients increase from 4 to 7, the RMSE for the training data decreases while the test data increases. The decrease in RMSE for the training data curve indicates that the models are overfitting with the training data. The overfitting negatively impacts the models’ accuracy in detecting noise and signal in the test data and thus generates an increase in RMSE for the test data curve.</p>
+<p>However, as the number of coefficients increase from 4 to 7, the RMSE for the training data decreases while the test data increases. The decrease in RMSE for the training data curve indicates that the models are overfitting with the training data. The overfitting negatively impacts the models’ accuracy in detecting noise and signal in the test data and thus increases the out-of-sample validity and an overall increase in RMSE as shown in the graph.</p>
 <p>Additionally, the training data curve has a lower RMSE than the test data curve for all coefficients because the models were trained using the training data and can make more accurate predictions within the training data.</p>
 </div>
 <div id="bonus" class="section level1">
